@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Attendance with QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color: #2d6a4f;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 32px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        p {
+            font-size: 18px;
+        }
+
+        .button {
+            background-color: #2d6a4f;
+            color: #ffffff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #1f4c37;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="button" href="../index.html"> > Back to homepage</a>
+    <header>
+        <h1>QR Code Scanner</h1>
+        <h3>For Subject Instructors</h3>
+        <p>Scan QR Codes using your camera</p>
+    </header>
+
+    <div class="container">
+        <h2>QR Code Scanner</h2>
+        <p>Click the "Start Scanner" button to begin scanning QR codes using your camera.</p>
+        <button id="startScanner" class="button">Start Scanner</button>
+    </div>
+
+    <script>
+        document.getElementById('startScanner').addEventListener('click', startScanner);
+
+        function startScanner() {
+            const resultContainer = document.getElementById('result');
+            resultContainer.innerHTML = ''; // Clear previous results
+
+            const constraints = {
+                video: {
+                    facingMode: 'environment', // Use the rear camera if available
+                },
+            };
+
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(function (stream) {
+                    const video = document.createElement('video');
+                    document.body.appendChild(video);
+                    video.srcObject = stream;
+                    video.play();
+
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.style.display = 'none';
+                    document.body.appendChild(canvas);
+
+                    const scanInterval = setInterval(scan, 500);
+
+                    function scan() {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                        if (code) {
+                            resultContainer.innerHTML = `<b>QR Code Data:</b> ${code.data}`;
+                            clearInterval(scanInterval);
+                            video.srcObject.getTracks().forEach(track => track.stop());
+                            video.remove();
+                            canvas.remove();
+                        }
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Error accessing the camera:', error);
+                });
+        }
+    </script>
+
+</body>
+
+</html>
